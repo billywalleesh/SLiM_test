@@ -1,0 +1,23 @@
+# R
+.Rhistory
+
+# Workshop raw materials (large files)
+workshop/original/
+
+# Results (generated outputs)
+results/
+
+# Data (optional – uncomment if large)
+# data/raw/
+# data/processed/
+
+# Python
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
