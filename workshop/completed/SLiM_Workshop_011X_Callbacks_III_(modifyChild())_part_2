@@ -1,0 +1,50 @@
+initialize() {
+	initializeMutationRate(1e-7);
+	initializeMutationType("m1", 0.5, "f" , 0.0); //neutral
+	initializeMutationType("m2", 0.5 , "f", 0.1); //lactase promoting (helps in milk digestion)
+	m2.convertToSubstitution = F;
+	initializeGenomicElementType("g1", c(m1,m2), c(0.99, 0.1));
+	initializeGenomicElement(g1, 0, 99999);
+	initializeRecombinationRate(1e-8);
+}
+
+//1 early() {
+//	sim.addSubpop("p1", 1000);
+// start as mostly non-milk-drinkers
+//tagL0 is the first logical tag we can customize tagF is a float and Tag is integer
+//0 = F 1 = T in this case 0 = non milk drinker, 1 = milk drinker 
+//values will be 0 about 99% of the time, whereas about 1% of values will be 1
+//	p1.individuals.tagL0 = asLogical(rbinom(1000, 1, 0.01));
+//}
+
+1 early() {
+	sim.addSubpop("p1", 1000);
+	// make a LogFile
+	log = community.createLogFile("milk_drinkers.csv", logInterval=1);
+	log.addTick();
+	log.addCustomColumn("fraction", "mean(p1.individuals.tagL0);");
+	// start as mostly non-milk-drinkers
+	p1.individuals.tagL0 = asLogical(rbinom(1000, 1, 0.01));
+}
+
+late() {
+	// dark blue for non-milk-drinkers, light gray for milk-drinkers
+	inds = p1.individuals;
+	inds.color = ifelse(inds.tagL0, "lightgray", "darkblue");
+	catn(sim.cycle + ": " + mean(inds.tagL0));
+}
+
+mutationEffect(m2) {
+	// beneficial for milk-drinkers, deleterious for non-milk-drinkers
+	return individual.tagL0 ? effect else 0.95;
+}
+
+2500 early() { sim.simulationFinished(); }
+
+modifyChild() {
+	// inherit culture from parents, with some deviation
+	parentCulture = mean(c(parent1, parent2).tagL0);
+	childCulture = rbinom(1, 1, 0.01 + 0.98 * parentCulture);
+	child.tagL0 = (childCulture == 1);
+	return T;
+}

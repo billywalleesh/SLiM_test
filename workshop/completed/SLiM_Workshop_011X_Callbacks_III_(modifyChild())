@@ -1,0 +1,42 @@
+initialize() {
+	initializeMutationRate(1e-7);
+	initializeMutationType("m1", 0.5, "f" , 0.0); // neutral 
+	initializeMutationType("m2", 0.5, "f" , 0.5); // Type a 
+	m2.convertToSubstitution = F ;
+	m2.color = "red";
+	initializeMutationType("m3", 0.5, "f" , 0.5); // Type b
+	m3.convertToSubstitution = F ;
+	m3.color = "#20D033";
+	initializeGenomicElementType("g1", m1, 1.0);
+	initializeGenomicElement(g1, 0, 99999);
+	initializeRecombinationRate(1e-8);
+}
+
+1 late() {
+	sim.addSubpop("p1", 500);
+	sample(p1.haplosomes, 20).addNewDrawnMutation(m2, 10000); //add a (adds to position 10000)
+	sample(p1.haplosomes, 20).addNewDrawnMutation(m3, 20000); //add b 
+}
+
+//modifyChild() {
+//	hasMutA = any(child.haplosomes.countOfMutationsOfType(m2) > 0);
+//	hasMutB = any(child.haplosomes.countOfMutationsOfType(m3) > 0);
+//	if (hasMutA & hasMutB)
+//		return F;
+//	return T;
+//}
+
+//exercise 1 create a callback that kills only organisms homozygous for both mutations 
+modifyChild() {
+ 	mutaCount = sum(child.haplosomes.countOfMutationsOfType(m2));
+ 	mutbCount = sum(child.haplosomes.countOfMutationsOfType(m3));
+	if (mutaCount == 2 & mutbCount == 2)
+		return F ;
+	return T ;
+}
+
+10000 early() {
+	sim.simulationFinished();
+
+}
+
