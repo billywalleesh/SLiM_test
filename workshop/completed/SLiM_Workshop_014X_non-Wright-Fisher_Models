@@ -1,0 +1,83 @@
+// set up a simple neutral nonWF simulation
+initialize() {
+	initializeSLiMModelType("nonWF");
+	defineConstant("K", 500);	// carrying capacity
+	
+	// neutral mutations, which are allowed to fix
+	initializeMutationType("m1", 0.5, "f", 0.0);
+	m1.convertToSubstitution = T;
+	initializeMutationType("m2", 0.5, "f", -0.1);
+	
+	initializeGenomicElementType("g1", m1, 1.0);
+	initializeGenomicElement(g1, 0, 99999);
+	initializeMutationRate(1e-7);
+	initializeRecombinationRate(1e-8);
+}
+
+// "big bang" reproduction
+reproduction() {
+	for (s in sim.subpopulations)
+	{
+		// randomize the order of s.individuals
+		parents = sample(s.individuals, s.individualCount);
+		
+		// draw monogamous pairs and generate litters
+		for (i in seq(0, s.individualCount - 2, by=2))
+		{
+			parent1 = parents[i];
+			parent2 = parents[i + 1];
+			litterSize = rpois(1, 2.7);
+			
+			for (j in seqLen(litterSize))
+				s.addCrossed(parent1, parent2);
+		}
+	}
+	
+	// disable this callback for this tick
+	self.active = 0;
+}
+
+// create an initial population of 10 individuals
+1 early() {
+	sim.addSubpop("p1", 10);
+	sim.addSubpop("p2", 10);
+	sim.subpopulations.haplosomes.addNewDrawnMutation(m2, 10000);
+}
+
+// provide age-dependent mortality and density-dependent selection
+early() {
+	for (s in sim.subpopulations)
+	{
+		sim.killIndividuals(s.subsetIndividuals(minAge=3));
+
+		s.fitnessScaling = K / s.individualCount;
+	}
+}
+
+// bidirectional migration;
+late()
+{
+	// pre-plan migration before executing it
+	n_migrants = asInteger(round(p1.individualCount * 0.01));
+	migrants_p1 = p1.sampleIndividuals(n_migrants);
+	
+	n_migrants = asInteger(round(p2.individualCount * 0.01));
+	migrants_p2 = p2.sampleIndividuals(n_migrants);
+	
+	// now execute our planned migration pattern
+	p2.takeMigrants(migrants_p1);
+	p1.takeMigrants(migrants_p2);
+}
+
+
+late() {
+	for (s in sim.subpopulations)
+	{
+		inds = s.individuals;
+		cat(sim.cycle + ": p" + s.id + ": " + size(inds));
+		catn(" (" + max(inds.age) + ", " + mean(inds.age) + ")");
+	}
+}
+
+// output all fixed mutations at end
+2000 late() { sim.outputFixedMutations(); }
